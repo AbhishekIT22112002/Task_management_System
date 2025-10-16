@@ -1,0 +1,617 @@
+@use './variables' as v;
+
+// Modern Kanban Board Layout
+.kanban-board {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: v.$background;
+  min-height: calc(100vh - 120px);
+  padding: 0;
+}
+
+// Kanban Columns Container
+.kanban-columns {
+  display: flex;
+  gap: v.$spacing-lg;
+  height: 100%;
+  overflow-x: auto;
+  padding: v.$spacing-md;
+  min-height: calc(100vh - 180px);
+  
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: v.$surface-secondary;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: v.$border;
+    border-radius: 4px;
+    
+    &:hover {
+      background: v.$text-muted;
+    }
+  }
+  
+  @media (max-width: v.$mobile-breakpoint) {
+    flex-direction: column;
+    gap: v.$spacing-md;
+    height: auto;
+    min-height: auto;
+    padding: v.$spacing-sm;
+  }
+}
+
+// Individual Kanban Column
+.kanban-column {
+  flex: 0 0 350px;
+  display: flex;
+  flex-direction: column;
+  background: v.$surface;
+  border-radius: 16px;
+  border: 1px solid v.$border-light;
+  box-shadow: v.$shadow-sm;
+  transition: all v.$transition-normal;
+  max-height: calc(100vh - 200px);
+  
+  &:hover {
+    box-shadow: v.$shadow-md;
+    border-color: v.$border;
+  }
+  
+  @media (max-width: v.$mobile-breakpoint) {
+    flex: none;
+    width: 100%;
+    max-height: 60vh;
+    min-height: 300px;
+  }
+  
+  @media (max-width: 480px) {
+    border-radius: 12px;
+    max-height: 50vh;
+  }
+}
+
+// Column Header
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: v.$spacing-lg v.$spacing-lg v.$spacing-md v.$spacing-lg;
+  border-bottom: 1px solid v.$border-light;
+  background: linear-gradient(135deg, v.$surface 0%, v.$surface-tertiary 100%);
+  border-radius: 16px 16px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  
+  .column-title {
+    display: flex;
+    align-items: center;
+    gap: v.$spacing-sm;
+    font-weight: v.$font-weight-bold;
+    color: v.$text-primary;
+    font-size: v.$font-size-base;
+    
+    .column-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: v.$radius-full;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+      flex-shrink: 0;
+    }
+    
+    .task-count {
+      background: v.$surface-secondary;
+      color: v.$text-secondary;
+      font-size: v.$font-size-xs;
+      font-weight: v.$font-weight-bold;
+      padding: 4px 8px;
+      border-radius: v.$radius-full;
+      min-width: 24px;
+      text-align: center;
+      border: 1px solid v.$border-light;
+      margin-left: v.$spacing-xs;
+    }
+  }
+  
+  .btn {
+    padding: 8px;
+    border-radius: v.$radius-md;
+    transition: all v.$transition-fast;
+    
+    &:hover {
+      background: v.$surface-secondary;
+      transform: scale(1.05);
+    }
+  }
+}
+
+// Column Content (Droppable Area)
+.column-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: v.$spacing-md;
+  padding: v.$spacing-md v.$spacing-lg v.$spacing-lg v.$spacing-lg;
+  overflow-y: auto;
+  min-height: 200px;
+  
+  &.dragging-over {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(168, 85, 247, 0.03) 100%);
+    border-radius: 0 0 16px 16px;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 0 0 16px 16px;
+      border: 2px dashed v.$primary-300;
+      pointer-events: none;
+    }
+  }
+  
+  // Custom scrollbar for column content
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: v.$border;
+    border-radius: 2px;
+    
+    &:hover {
+      background: v.$text-muted;
+    }
+  }
+  
+  @media (max-width: v.$mobile-breakpoint) {
+    padding: v.$spacing-sm v.$spacing-md;
+    gap: v.$spacing-sm;
+    min-height: 150px;
+  }
+}
+
+// Modern Task Cards
+.task-card {
+  background: v.$surface;
+  border-radius: 12px;
+  padding: v.$spacing-lg;
+  border: 1px solid v.$border-light;
+  box-shadow: v.$shadow-xs;
+  transition: all v.$transition-normal;
+  cursor: grab;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, v.$primary-400, v.$accent-purple);
+    opacity: 0;
+    transition: opacity v.$transition-fast;
+  }
+  
+  &:hover {
+    box-shadow: v.$shadow-lg;
+    transform: translateY(-2px);
+    border-color: v.$primary-200;
+    
+    &::before {
+      opacity: 1;
+    }
+  }
+  
+  &.dragging {
+    transform: rotate(3deg) scale(1.02);
+    box-shadow: v.$shadow-2xl;
+    cursor: grabbing;
+    z-index: 1000;
+    border-color: v.$primary-300;
+    
+    &::before {
+      opacity: 1;
+    }
+  }
+  
+  @media (max-width: v.$mobile-breakpoint) {
+    padding: v.$spacing-md;
+    border-radius: 10px;
+    
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// Task Card Header
+.task-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: v.$spacing-md;
+  
+  .task-priority {
+    display: flex;
+    align-items: center;
+    gap: v.$spacing-xs;
+    padding: 4px 8px;
+    border-radius: v.$radius-md;
+    background: v.$surface-secondary;
+    border: 1px solid v.$border-light;
+    
+    .priority-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: v.$radius-full;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+    }
+    
+    .priority-label {
+      font-size: v.$font-size-xs;
+      font-weight: v.$font-weight-bold;
+      color: v.$text-secondary;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  }
+  
+  .task-menu {
+    position: relative;
+    
+    .btn {
+      padding: 4px;
+      border-radius: v.$radius-sm;
+      opacity: 0;
+      transition: all v.$transition-fast;
+      
+      &:hover {
+        background: v.$surface-secondary;
+      }
+    }
+    
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      min-width: 160px;
+      background: v.$surface;
+      border: 1px solid v.$border;
+      border-radius: v.$radius-lg;
+      box-shadow: v.$shadow-xl;
+      z-index: 1000;
+      padding: v.$spacing-xs;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all v.$transition-fast;
+      
+      &.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: v.$spacing-sm;
+        width: 100%;
+        padding: v.$spacing-sm v.$spacing-md;
+        border: none;
+        background: none;
+        text-align: left;
+        font-size: v.$font-size-sm;
+        color: v.$text-primary;
+        border-radius: v.$radius-md;
+        cursor: pointer;
+        transition: all v.$transition-fast;
+        
+        &:hover {
+          background: v.$surface-secondary;
+          color: v.$primary;
+        }
+        
+        &.text-red-600 {
+          color: v.$red-500;
+          
+          &:hover {
+            background: v.$red-100;
+            color: v.$red-600;
+          }
+        }
+      }
+    }
+  }
+}
+
+.task-card:hover .task-menu .btn {
+  opacity: 1;
+}
+
+// Task Content
+.task-content {
+  margin-bottom: v.$spacing-md;
+  
+  .task-title {
+    font-size: v.$font-size-base;
+    font-weight: v.$font-weight-semibold;
+    color: v.$text-primary;
+    margin: 0 0 v.$spacing-sm 0;
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+  
+  .task-description {
+    font-size: v.$font-size-sm;
+    color: v.$text-secondary;
+    margin: 0;
+    line-height: 1.5;
+    word-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+// Task Tags
+.task-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: v.$spacing-xs;
+  margin-bottom: v.$spacing-md;
+  
+  .task-tag {
+    background: linear-gradient(135deg, v.$primary-100, v.$primary-200);
+    color: v.$primary-700;
+    font-size: v.$font-size-xs;
+    font-weight: v.$font-weight-medium;
+    padding: 4px 8px;
+    border-radius: v.$radius-md;
+    border: 1px solid v.$primary-300;
+    white-space: nowrap;
+  }
+}
+
+// Task Footer
+.task-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: v.$spacing-sm;
+  border-top: 1px solid v.$border-light;
+  
+  .task-meta {
+    display: flex;
+    align-items: center;
+    gap: v.$spacing-md;
+    flex: 1;
+    
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: v.$font-size-xs;
+      color: v.$text-muted;
+      font-weight: v.$font-weight-medium;
+      
+      svg {
+        flex-shrink: 0;
+      }
+      
+      span {
+        white-space: nowrap;
+      }
+    }
+  }
+  
+  .task-stats {
+    display: flex;
+    align-items: center;
+    gap: v.$spacing-sm;
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: v.$font-size-xs;
+      color: v.$text-muted;
+      font-weight: v.$font-weight-medium;
+      
+      svg {
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+// Empty Column State
+.column-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: v.$spacing-xl;
+  color: v.$text-muted;
+  text-align: center;
+  min-height: 200px;
+  
+  .empty-icon {
+    width: 48px;
+    height: 48px;
+    background: v.$surface-secondary;
+    border-radius: v.$radius-full;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: v.$spacing-md;
+    color: v.$text-muted;
+  }
+  
+  .empty-text {
+    font-size: v.$font-size-sm;
+    margin-bottom: v.$spacing-sm;
+  }
+  
+  .empty-subtext {
+    font-size: v.$font-size-xs;
+    color: v.$text-muted;
+  }
+}
+
+// Responsive Design
+@media (max-width: v.$tablet-breakpoint) {
+  .kanban-columns {
+    gap: v.$spacing-md;
+  }
+  
+  .kanban-column {
+    flex: 0 0 300px;
+    
+    .column-header {
+      padding: v.$spacing-md;
+    }
+  }
+  
+  .task-card {
+    padding: v.$spacing-md;
+    
+    .task-header {
+      margin-bottom: v.$spacing-sm;
+    }
+    
+    .task-content {
+      margin-bottom: v.$spacing-sm;
+    }
+    
+    .task-footer {
+      .task-meta {
+        gap: v.$spacing-sm;
+      }
+    }
+  }
+}
+
+@media (max-width: v.$mobile-breakpoint) {
+  .kanban-board {
+    min-height: auto;
+  }
+  
+  .kanban-columns {
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+    overflow-x: visible;
+  }
+  
+  .kanban-column {
+    max-height: none;
+    min-height: 250px;
+    
+    .column-content {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  }
+  
+  .task-footer {
+    flex-direction: column;
+    gap: v.$spacing-sm;
+    align-items: flex-start;
+    
+    .task-meta {
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    .task-stats {
+      align-self: flex-end;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .column-header {
+    .column-title {
+      font-size: v.$font-size-sm;
+      
+      .task-count {
+        font-size: 10px;
+        padding: 2px 6px;
+        min-width: 20px;
+      }
+    }
+  }
+  
+  .task-content {
+    .task-title {
+      font-size: v.$font-size-sm;
+    }
+    
+    .task-description {
+      font-size: v.$font-size-xs;
+      -webkit-line-clamp: 2;
+    }
+  }
+  
+  .task-tags {
+    .task-tag {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+  }
+}
+
+// Animation for task creation
+@keyframes taskSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.task-card.task-new {
+  animation: taskSlideIn 0.3s ease-out;
+}
+
+// Loading states
+.column-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: v.$spacing-xl;
+  
+  .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid v.$border;
+    border-radius: 50%;
+    border-top-color: v.$primary;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

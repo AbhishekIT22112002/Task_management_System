@@ -1,11 +1,11 @@
 @use './styles/variables' as v;
 @use './styles/layout';
 @use './styles/auth';
-@use './styles/sidebar';
+@use './styles/sidebar-modern' as sidebar;
 @use './styles/navbar';
 @use './styles/breadcrumbs';
-@use './styles/projects';
-@use './styles/kanban';
+@use './styles/projects-modern' as projects;
+@use './styles/kanban-modern' as kanban;
 @use './styles/ai-assistant';
 
 * { box-sizing: border-box }

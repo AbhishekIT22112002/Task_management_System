@@ -1,10 +1,11 @@
 @use './variables' as v;
 
-// Sidebar Layout
+// Modern Sidebar Layout
 .sidebar {
-  width: 280px;
+  width: v.$sidebar-width;
   height: 100vh;
-  background: #2c3e50;
+  background: linear-gradient(135deg, v.$slate-900 0%, v.$slate-800 100%);
+  backdrop-filter: blur(20px);
   color: white;
   display: flex;
   flex-direction: column;
@@ -12,40 +13,157 @@
   left: 0;
   top: 0;
   z-index: v.$z-dropdown;
-}
-
-// Sidebar Header
-.sidebar-header {
-  padding: v.$spacing-lg;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: v.$spacing-sm;
-
-    .brand-icon {
-      font-size: 24px;
-    }
-
-    .brand-text {
-      font-size: v.$font-size-lg;
-      font-weight: v.$font-weight-bold;
-      color: white;
+  transition: width v.$transition-normal ease-in-out, transform v.$transition-normal ease-in-out;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: v.$shadow-xl;
+  
+  &.collapsed {
+    width: v.$sidebar-width-collapsed;
+  }
+  
+  @media (max-width: v.$mobile-breakpoint) {
+    transform: translateX(-100%);
+    
+    &.mobile-open {
+      transform: translateX(0);
     }
   }
 }
 
-// Sidebar Navigation
+// Modern Sidebar Header
+.sidebar-header {
+  padding: v.$spacing-lg;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: v.$spacing-sm;
+    overflow: hidden;
+    
+    .brand-icon {
+      background: linear-gradient(135deg, v.$primary-400, v.$primary-600);
+      border-radius: v.$radius-lg;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .brand-text {
+      font-size: v.$font-size-xl;
+      font-weight: v.$font-weight-bold;
+      color: white;
+      white-space: nowrap;
+      opacity: 1;
+      transition: opacity v.$transition-normal;
+    }
+  }
+  
+  .mobile-close-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    padding: v.$spacing-xs;
+    border-radius: v.$radius-md;
+    transition: all v.$transition-fast;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+    
+    @media (max-width: v.$mobile-breakpoint) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+// User Profile Section
+.user-profile {
+  padding: v.$spacing-md v.$spacing-lg;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: v.$spacing-sm;
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: v.$radius-full;
+    background: linear-gradient(135deg, v.$primary-500, v.$accent-purple);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: v.$font-weight-bold;
+    font-size: v.$font-size-sm;
+    color: white;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .user-info {
+    flex: 1;
+    min-width: 0;
+    opacity: 1;
+    transition: opacity v.$transition-normal;
+    
+    .user-name {
+      font-size: v.$font-size-sm;
+      font-weight: v.$font-weight-semibold;
+      color: white;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .user-email {
+      font-size: v.$font-size-xs;
+      color: rgba(255, 255, 255, 0.7);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+// Modern Sidebar Navigation
 .sidebar-nav {
   flex: 1;
-  padding: v.$spacing-lg v.$spacing-md;
+  padding: v.$spacing-md 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+  }
 }
 
 .nav-section {
-  margin-bottom: v.$spacing-xl;
-
+  margin-bottom: v.$spacing-lg;
+  padding: 0 v.$spacing-md;
+  
   &:last-child {
     margin-bottom: 0;
   }
@@ -56,15 +174,17 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: v.$spacing-sm;
+  padding: 0;
 }
 
 .nav-section-title {
   font-size: v.$font-size-xs;
-  font-weight: v.$font-weight-semibold;
-  color: rgba(255, 255, 255, 0.6);
+  font-weight: v.$font-weight-bold;
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   margin-bottom: v.$spacing-sm;
+  padding: 0 v.$spacing-xs;
 }
 
 .btn-add-project {

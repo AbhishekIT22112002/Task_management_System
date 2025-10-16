@@ -433,7 +433,7 @@ export default function KanbanBoard() {
                                       className="dropdown-item"
                                       onClick={() => handleEditTask(task)}
                                     >
-                                      Rename Task
+                                      Edit Task
                                     </button>
                                     <button 
                                       className="dropdown-item text-red-600"

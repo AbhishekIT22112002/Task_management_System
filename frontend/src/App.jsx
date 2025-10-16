@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Menu } from 'lucide-react'
 import store from './store'
 import { Routes, Route } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
@@ -17,6 +17,9 @@ import { checkAuth } from './slices/authSlice'
 function AppInner() {
   const dispatch = useDispatch()
   const { token, status: authStatus } = useSelector((state) => state.auth)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  
   useEffect(() => {
     // Check authentication on app startup if we have a token
     if (token && authStatus === 'idle') {
@@ -24,8 +27,46 @@ function AppInner() {
     }
   }, [dispatch, token, authStatus])
   
+  // Handle click outside sidebar to collapse it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Only handle on desktop
+      if (window.innerWidth > 768) {
+        const sidebar = document.querySelector('.sidebar')
+        const mobileMenuButton = document.querySelector('.mobile-menu-button')
+        
+        if (sidebar && !sidebar.contains(event.target) && 
+            !mobileMenuButton?.contains(event.target) && 
+            !sidebarCollapsed) {
+          setSidebarCollapsed(true)
+        }
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [sidebarCollapsed])
+  
   // Show loading spinner while checking auth
   const isInitialLoading = (token && authStatus === 'loading')
+  
+  const handleSidebarToggle = () => {
+    setSidebarCollapsed(!sidebarCollapsed)
+  }
+  
+  const handleMobileMenuToggle = () => {
+    setMobileMenuOpen(!mobileMenuOpen)
+  }
+  
+  const handleMobileMenuClose = () => {
+    setMobileMenuOpen(false)
+  }
+  
+  const handleSidebarClick = () => {
+    if (sidebarCollapsed && window.innerWidth > 768) {
+      setSidebarCollapsed(false)
+    }
+  }
   
   if (isInitialLoading) {
     return (
@@ -72,8 +113,25 @@ function AppInner() {
             element={
               <RequireAuth>
                 <div className="app-layout">
-                  <Sidebar />
-                  <div className="main-content">
+                  <Sidebar 
+                    isCollapsed={sidebarCollapsed}
+                    onToggleCollapse={handleSidebarToggle}
+                    isMobileOpen={mobileMenuOpen}
+                    onMobileClose={handleMobileMenuClose}
+                    onSidebarClick={handleSidebarClick}
+                  />
+                  <div className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+                    {/* Mobile Header */}
+                    <div className="mobile-header">
+                      <button 
+                        className="mobile-menu-button"
+                        onClick={handleMobileMenuToggle}
+                      >
+                        <Menu size={24} />
+                      </button>
+                      <div className="mobile-header-title">TaskFlow</div>
+                    </div>
+                    
                     <Routes>
                       <Route path="/" element={<ProjectsList />} />
                       <Route path="/create" element={<ProjectForm />} />
@@ -82,7 +140,6 @@ function AppInner() {
                       <Route path="/project/:id" element={<KanbanBoard />} />
                     </Routes>
                   </div>
-                  <AIAssistant />
                 </div>
               </RequireAuth>
             }

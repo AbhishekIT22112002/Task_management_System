@@ -234,9 +234,9 @@ export default function ProjectForm() {
           <div className="card card-compact" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
             <h4 className="text-sm font-semibold text-gray-700 mb-2">Tips for creating a great project:</h4>
             <ul className="text-sm text-gray-600 space-y-1" style={{ paddingLeft: '1rem' }}>
-              <li>• Choose a clear, descriptive name that team members will understand</li>
-              <li>• Add a detailed description to help collaborators understand the project goals</li>
-              <li>• You can always edit these details later from the project settings</li>
+              <li>Choose a clear, descriptive name that team members will understand</li>
+              <li>Add a detailed description to help collaborators understand the project goals</li>
+              <li>You can always edit these details later from the project settings</li>
             </ul>
           </div>
         </div>

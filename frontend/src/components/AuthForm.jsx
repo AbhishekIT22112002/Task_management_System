@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { register, login } from '../slices/authSlice'
 import { Navigate, useLocation } from 'react-router-dom'
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Loader2, Home } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AuthForm() {
@@ -238,13 +238,19 @@ export default function AuthForm() {
     <div className="auth-wrapper">
       <div className="auth-card">
         <div className="auth-header">
+          <div className="auth-brand">
+            <div className="brand-icon">
+              <Home size={24} />
+            </div>
+            <div className="brand-text">TaskFlow</div>
+          </div>
           <h1 className="auth-title">
             {mode === 'login' ? 'Welcome back' : 'Create your account'}
           </h1>
           <p className="auth-subtitle">
             {mode === 'login' 
-              ? 'Sign in to your account to continue'
-              : 'Get started with your task management'
+              ? 'Sign in to your account to continue your productivity journey'
+              : 'Join thousands of users managing their projects efficiently'
             }
           </p>
         </div>
