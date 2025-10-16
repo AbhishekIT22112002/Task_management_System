@@ -191,6 +191,33 @@
 .nav-item-dropdown {
   position: relative;
   
+  .nav-item-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    
+    .nav-item {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    
+    .expand-button {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      padding: v.$spacing-xs;
+      border-radius: v.$radius-sm;
+      transition: all v.$transition-fast;
+      margin-left: v.$spacing-xs;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+      }
+    }
+  }
+  
   .dropdown-content {
     position: absolute;
     left: calc(100% + 10px);

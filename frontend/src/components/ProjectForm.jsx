@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, Link } from 'react-router-dom'
-import { createProject } from '../slices/projectsSlice'
-import { ArrowLeft, Plus, Check, AlertCircle } from 'lucide-react'
+import { useNavigate, Link, useParams } from 'react-router-dom'
+import { createProject, updateProject, fetchProjects } from '../slices/projectsSlice'
+import { ArrowLeft, Plus, Check, AlertCircle, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function ProjectForm() {
@@ -12,10 +12,29 @@ export default function ProjectForm() {
   })
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { status } = useSelector((s) => s.projects)
+  const params = useParams()
+  const { items: projects, status } = useSelector((s) => s.projects)
+  
+  const isEditMode = !!params.id
+  const currentProject = isEditMode ? projects.find(p => p._id === params.id) : null
+
+  // Load projects and populate form if in edit mode
+  useEffect(() => {
+    if (isEditMode) {
+      if (projects.length === 0 && status === 'idle') {
+        dispatch(fetchProjects())
+      } else if (currentProject) {
+        setFormData({
+          name: currentProject.name || '',
+          description: currentProject.description || ''
+        })
+      }
+    }
+  }, [isEditMode, currentProject, projects.length, dispatch, status])
 
   const validateForm = () => {
     const newErrors = {}
@@ -62,22 +81,29 @@ export default function ProjectForm() {
     setIsSubmitting(true)
     
     try {
-      const result = await dispatch(createProject({
+      const projectData = {
         name: formData.name.trim(),
         description: formData.description.trim()
-      }))
+      }
+      
+      let result
+      if (isEditMode) {
+        result = await dispatch(updateProject({ id: params.id, ...projectData }))
+      } else {
+        result = await dispatch(createProject(projectData))
+      }
       
       if (result.meta.requestStatus === 'fulfilled') {
-        toast.success('Project created successfully!')
+        toast.success(isEditMode ? 'Project updated successfully!' : 'Project created successfully!')
         setTimeout(() => {
           navigate('/')
         }, 1000)
       } else {
-        toast.error('Failed to create project')
+        toast.error(isEditMode ? 'Failed to update project' : 'Failed to create project')
       }
     } catch (error) {
-      console.error('Error creating project:', error)
-      toast.error('Failed to create project')
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} project:`, error)
+      toast.error(isEditMode ? 'Failed to update project' : 'Failed to create project')
     } finally {
       setIsSubmitting(false)
     }
@@ -97,10 +123,10 @@ export default function ProjectForm() {
             <Link to="/" className="btn btn-ghost btn-icon">
               <ArrowLeft size={16} />
             </Link>
-            <div className="header-title">Create New Project</div>
+            <div className="header-title">{isEditMode ? 'Edit Project' : 'Create New Project'}</div>
           </div>
           <div className="header-subtitle">
-            Set up a new project to organize your tasks and collaborate with your team
+            {isEditMode ? 'Update your project details' : 'Set up a new project to organize your tasks and collaborate with your team'}
           </div>
         </div>
       </div>
@@ -174,12 +200,12 @@ export default function ProjectForm() {
                 {isSubmitting ? (
                   <>
                     <div className="loading"></div>
-                    Creating...
+                    {isEditMode ? 'Updating...' : 'Creating...'}
                   </>
                 ) : (
                   <>
-                    <Plus size={16} />
-                    Create Project
+                    {isEditMode ? <Save size={16} /> : <Plus size={16} />}
+                    {isEditMode ? 'Update Project' : 'Create Project'}
                   </>
                 )}
               </button>

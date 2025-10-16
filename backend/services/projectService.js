@@ -5,8 +5,9 @@ const createProject = async (data) => {
   return await project.save()
 }
 
-const getProjects = async () => {
-  return await Project.find().sort({ createdAt: -1 })
+const getProjects = async (userId) => {
+  const query = userId ? { owner: userId } : {}
+  return await Project.find(query).sort({ createdAt: -1 })
 }
 
 const getProjectById = async (id) => {

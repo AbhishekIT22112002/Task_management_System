@@ -20,6 +20,7 @@ export const createTask = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const res = await api.post('/tasks', payload)
+      
       return res.data
     } catch (error) {
       const message = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to create task'
@@ -84,10 +85,22 @@ const tasksSlice = createSlice({
       state.items = []
       state.byProject = {}
     },
+    clearAllTaskData: (state) => {
+      state.items = []
+      state.byProject = {}
+      state.status = 'idle'
+      state.error = null
+    },
+    // Set tasks from project board data
+    setTasksFromBoard: (state, action) => {
+      state.items = action.payload
+      state.status = 'succeeded'
+      state.error = null
+    },
     // Optimistic updates for drag and drop
     moveTaskLocally: (state, action) => {
       const { taskId, newStatus, newIndex } = action.payload
-      const task = state.items.find(t => t.id === taskId)
+      const task = state.items.find(t => t._id === taskId)
       if (task) {
         task.status = newStatus
         task.order = newIndex
@@ -123,7 +136,7 @@ const tasksSlice = createSlice({
       })
       // Update Task
       .addCase(updateTask.fulfilled, (state, action) => {
-        const index = state.items.findIndex(t => t.id === action.payload.id)
+        const index = state.items.findIndex(t => t._id === action.payload._id)
         if (index !== -1) {
           state.items[index] = action.payload
         }
@@ -134,7 +147,7 @@ const tasksSlice = createSlice({
       })
       // Delete Task
       .addCase(deleteTask.fulfilled, (state, action) => {
-        state.items = state.items.filter(t => t.id !== action.payload)
+        state.items = state.items.filter(t => t._id !== action.payload)
         state.error = null
       })
       .addCase(deleteTask.rejected, (state, action) => {
@@ -142,7 +155,7 @@ const tasksSlice = createSlice({
       })
       // Update Task Status
       .addCase(updateTaskStatus.fulfilled, (state, action) => {
-        const index = state.items.findIndex(t => t.id === action.payload.id)
+        const index = state.items.findIndex(t => t._id === action.payload._id)
         if (index !== -1) {
           state.items[index] = action.payload
         }
@@ -154,5 +167,5 @@ const tasksSlice = createSlice({
   }
 })
 
-export const { clearError, clearTasks, moveTaskLocally } = tasksSlice.actions
+export const { clearError, clearTasks, clearAllTaskData, setTasksFromBoard, moveTaskLocally } = tasksSlice.actions
 export default tasksSlice.reducer

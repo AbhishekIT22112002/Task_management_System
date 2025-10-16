@@ -1,17 +1,36 @@
 import React, { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
-import { fetchProjects } from '../slices/projectsSlice'
+import { fetchProjects, deleteProject } from '../slices/projectsSlice'
 import { Plus, Calendar, Clock, Users, MoreVertical, Eye, Edit, Trash2 } from 'lucide-react'
+import ConfirmModal from './ConfirmModal'
+import toast from 'react-hot-toast'
 
 export default function ProjectsList() {
   const dispatch = useDispatch()
   const { items, status } = useSelector((s) => s.projects)
   const [activeMenu, setActiveMenu] = useState(null)
+  const [projectToDelete, setProjectToDelete] = useState(null)
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
 
   useEffect(() => {
-    if (status === 'idle') dispatch(fetchProjects())
-  }, [status, dispatch])
+    // Only fetch projects if we don't have any and status is idle
+    if (status === 'idle' && items.length === 0) {
+      dispatch(fetchProjects())
+    }
+  }, [dispatch, status, items.length])
+  
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (activeMenu) {
+        setActiveMenu(null)
+      }
+    }
+    
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [activeMenu])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -32,6 +51,22 @@ export default function ProjectsList() {
     if (diffInDays < 7) return `${diffInDays} days ago`
     if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`
     return `${Math.floor(diffInDays / 30)} months ago`
+  }
+
+  const handleDeleteProject = (project) => {
+    setProjectToDelete(project)
+    setIsConfirmModalOpen(true)
+    setActiveMenu(null)
+  }
+
+  const confirmDeleteProject = async () => {
+    try {
+      await dispatch(deleteProject(projectToDelete._id))
+      toast.success('Project deleted successfully')
+    } catch (error) {
+      console.error('Error deleting project:', error)
+      toast.error('Failed to delete project')
+    }
   }
 
   if (status === 'loading') {
@@ -128,41 +163,15 @@ export default function ProjectsList() {
         <div className="grid grid-auto">
           {items.map((project) => (
             <div key={project._id} className="project-card">
-              <div className="card card-interactive">
+              <Link 
+                to={`/project/${project._id}`}
+                className="card card-interactive"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
                 {/* Card Header */}
                 <div className="card-header">
-                  <Link 
-                    to={`/project/${project._id}`}
-                    className="project-title"
-                  >
+                  <div className="project-title">
                     {project.name}
-                  </Link>
-                  <div className="project-actions">
-                    <button 
-                      className="btn btn-ghost btn-sm btn-icon"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setActiveMenu(activeMenu === project._id ? null : project._id)
-                      }}
-                    >
-                      <MoreVertical size={16} />
-                    </button>
-                    {activeMenu === project._id && (
-                      <div className="action-menu">
-                        <Link to={`/project/${project._id}`} className="action-item">
-                          <Eye size={14} />
-                          View
-                        </Link>
-                        <Link to={`/project/${project._id}/edit`} className="action-item">
-                          <Edit size={14} />
-                          Edit
-                        </Link>
-                        <button className="action-item danger">
-                          <Trash2 size={14} />
-                          Delete
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -208,12 +217,59 @@ export default function ProjectsList() {
                   </div>
                   <span className="progress-text">0% Complete</span>
                 </div>
+              </Link>
+              
+              {/* Project Actions Menu */}
+              <div className="project-actions-menu">
+                <button 
+                  className="btn btn-ghost btn-sm btn-icon"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setActiveMenu(activeMenu === project._id ? null : project._id)
+                  }}
+                >
+                  <MoreVertical size={16} />
+                </button>
+                {activeMenu === project._id && (
+                  <div className="action-menu">
+                    <Link to={`/project/${project._id}`} className="action-item">
+                      <Eye size={14} />
+                      View Board
+                    </Link>
+                    <Link to={`/project/${project._id}/edit`} className="action-item">
+                      <Edit size={14} />
+                      Edit
+                    </Link>
+                    <button 
+                      className="action-item danger"
+                      onClick={() => handleDeleteProject(project)}
+                    >
+                      <Trash2 size={14} />
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
       </div>
+      
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => {
+          setIsConfirmModalOpen(false)
+          setProjectToDelete(null)
+        }}
+        onConfirm={confirmDeleteProject}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${projectToDelete?.name}"? This action cannot be undone and will delete all associated tasks.`}
+        confirmText="Delete"
+        confirmVariant="danger"
+      />
     </>
   )
 }

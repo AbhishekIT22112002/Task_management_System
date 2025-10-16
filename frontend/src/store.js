@@ -1,12 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit'
-import projectsReducer from './slices/projectsSlice'
+import projectsReducer, { clearAllProjectData } from './slices/projectsSlice'
 import authReducer from './slices/authSlice'
-import tasksReducer from './slices/tasksSlice'
+import tasksReducer, { clearAllTaskData } from './slices/tasksSlice'
 
-export default configureStore({
+const store = configureStore({
   reducer: {
     projects: projectsReducer,
     auth: authReducer,
     tasks: tasksReducer,
   },
 })
+
+export default store

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
@@ -7,7 +7,10 @@ import toast from 'react-hot-toast'
 import { Link } from 'react-router-dom'
 import { fetchProjects, fetchProjectBoard } from '../slices/projectsSlice'
 import { fetchTasks, createTask, updateTaskStatus } from '../slices/tasksSlice'
+import { setTasksFromBoard, updateTask, deleteTask } from '../slices/tasksSlice'
 import TaskCreateModal from './TaskCreateModal'
+import TaskEditModal from './TaskEditModal'
+import ConfirmModal from './ConfirmModal'
 import api from '../api'
 
 const columns = [
@@ -20,33 +23,50 @@ const columns = [
 export default function KanbanBoard() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [selectedColumnStatus, setSelectedColumnStatus] = useState(null)
+  const [editingTask, setEditingTask] = useState(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState(null)
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+  const [openMenuId, setOpenMenuId] = useState(null)
   
   const dispatch = useDispatch()
   const params = useParams()
   const projects = useSelector((state) => state.projects.items || [])
-  const { currentProject, currentBoard, status: projectStatus } = useSelector((state) => state.projects)
+  const { currentProject, currentBoard, boardStatus } = useSelector((state) => state.projects)
   const tasks = useSelector((state) => state.tasks.items || [])
   const { status: tasksStatus } = useSelector((state) => state.tasks)
   
-  const loading = projectStatus === 'loading' || tasksStatus === 'loading'
+  const loading = boardStatus === 'loading' || tasksStatus === 'loading'
   const projectId = params.id
+  
+  // Use tasks from currentBoard if available, otherwise fall back to tasks slice
+  const boardTasks = currentBoard?.tasks || tasks
 
   useEffect(() => {
-    if (projectId) {
-      // Fetch project board data (includes project info and tasks)
+    if (projectId && (!currentProject || currentProject._id !== projectId)) {
+      // Only fetch if we don't have the current project or it's different
       dispatch(fetchProjectBoard(projectId))
-    } else {
-      // If no project ID, redirect to dashboard or show project selector
-      dispatch(fetchProjects())
     }
-  }, [dispatch, projectId])
+  }, [dispatch, projectId, currentProject?._id])
   
+  // Sync tasks from board data when available (only when board actually changes)
   useEffect(() => {
-    if (projectId && currentProject) {
-      // Fetch tasks for the current project
-      dispatch(fetchTasks(projectId))
+    if (currentBoard?.tasks && currentBoard.project?._id === projectId) {
+      dispatch(setTasksFromBoard(currentBoard.tasks))
     }
-  }, [dispatch, projectId, currentProject])
+  }, [currentBoard?.project?._id, currentBoard?.tasks?.length, dispatch, projectId])
+  
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (openMenuId) {
+        setOpenMenuId(null)
+      }
+    }
+    
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [openMenuId])
 
   const handleDragEnd = async (result) => {
     if (!result.destination) return
@@ -57,21 +77,46 @@ export default function KanbanBoard() {
       return
     }
 
+    // Get current board tasks for optimistic update
+    const currentTasks = boardTasks
+    
+    // Optimistically update the task status in local state first
+    const updatedTasks = currentTasks.map(task => 
+      task._id === draggableId 
+        ? { ...task, status: destination.droppableId }
+        : task
+    )
+    
+    // Update local state immediately for smooth UI
+    dispatch(setTasksFromBoard(updatedTasks))
+
     try {
-      // Update task status using Redux action
-      await dispatch(updateTaskStatus({ 
+      // Update task status on server
+      const result = await dispatch(updateTaskStatus({ 
         id: draggableId, 
         status: destination.droppableId 
       }))
+      
+      // If server update was successful, sync the updated task
+      if (result.meta.requestStatus === 'fulfilled') {
+        const serverUpdatedTask = result.payload
+        const finalTasks = updatedTasks.map(task => 
+          task._id === draggableId ? serverUpdatedTask : task
+        )
+        dispatch(setTasksFromBoard(finalTasks))
+      }
+      
       toast.success('Task moved successfully')
     } catch (error) {
       console.error('Error updating task:', error)
       toast.error('Failed to move task')
+      // Revert the optimistic update on failure
+      dispatch(setTasksFromBoard(currentTasks))
     }
   }
 
   const getTasksByColumn = (columnId) => {
-    return tasks.filter(task => task.status === columnId)
+    return boardTasks.filter(task => task.status === columnId)
   }
 
   const handleOpenTaskModal = (columnStatus) => {
@@ -85,10 +130,18 @@ export default function KanbanBoard() {
 
   const handleCreateTask = async (taskData) => {
     try {
-      await dispatch(createTask({
+      const result = await dispatch(createTask({
         ...taskData,
         projectId
       }))
+      
+      // If task creation was successful, add it to the current board tasks
+      if (result.meta.requestStatus === 'fulfilled') {
+        const newTask = result.payload
+        const updatedTasks = [...tasks, newTask]
+        dispatch(setTasksFromBoard(updatedTasks))
+      }
+      
       toast.success('Task created successfully')
     } catch (error) {
       console.error('Error creating task:', error)
@@ -129,6 +182,56 @@ export default function KanbanBoard() {
     if (diffDays <= 2) return '#f59e0b' // Due soon - amber
     return '#6b7280' // Normal - gray
   }
+
+  const handleEditTask = useCallback((task) => {
+    setEditingTask(task)
+    setIsEditModalOpen(true)
+    setOpenMenuId(null)
+  }, [])
+
+  const handleUpdateTask = useCallback(async (taskData) => {
+    try {
+      const result = await dispatch(updateTask({ id: editingTask._id, ...taskData }))
+      
+      // Update the task in the current board tasks immediately
+      if (result.meta.requestStatus === 'fulfilled') {
+        const updatedTask = result.payload
+        const updatedTasks = tasks.map(task => 
+          task._id === editingTask._id ? updatedTask : task
+        )
+        dispatch(setTasksFromBoard(updatedTasks))
+      }
+      
+      toast.success('Task updated successfully')
+    } catch (error) {
+      console.error('Error updating task:', error)
+      toast.error('Failed to update task')
+      throw error
+    }
+  }, [dispatch, editingTask?._id, tasks])
+
+  const handleDeleteTask = useCallback((task) => {
+    setTaskToDelete(task)
+    setIsConfirmModalOpen(true)
+    setOpenMenuId(null)
+  }, [])
+
+  const confirmDeleteTask = useCallback(async () => {
+    try {
+      const result = await dispatch(deleteTask(taskToDelete._id))
+      
+      // Remove the task from the current board tasks immediately
+      if (result.meta.requestStatus === 'fulfilled') {
+        const updatedTasks = tasks.filter(task => task._id !== taskToDelete._id)
+        dispatch(setTasksFromBoard(updatedTasks))
+      }
+      
+      toast.success('Task deleted successfully')
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      toast.error('Failed to delete task')
+    }
+  }, [dispatch, taskToDelete?._id, tasks])
 
   // Show project selector if no project ID
   if (!projectId) {
@@ -269,9 +372,34 @@ export default function KanbanBoard() {
                                 <span className="priority-label">{task.priority}</span>
                               </div>
                               
-                              <button className="btn btn-ghost btn-sm btn-icon">
-                                <MoreVertical size={14} />
-                              </button>
+                              <div className="task-menu">
+                                <button 
+                                  className="btn btn-ghost btn-sm btn-icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setOpenMenuId(openMenuId === task._id ? null : task._id)
+                                  }}
+                                >
+                                  <MoreVertical size={14} />
+                                </button>
+                                
+                                {openMenuId === task._id && (
+                                  <div className="dropdown-menu active">
+                                    <button 
+                                      className="dropdown-item"
+                                      onClick={() => handleEditTask(task)}
+                                    >
+                                      Rename Task
+                                    </button>
+                                    <button 
+                                      className="dropdown-item text-red-600"
+                                      onClick={() => handleDeleteTask(task)}
+                                    >
+                                      Delete Task
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             {/* Task Content */}
@@ -350,6 +478,31 @@ export default function KanbanBoard() {
         onSubmit={handleCreateTask}
         columnStatus={selectedColumnStatus}
         projectName={currentProject?.name || 'Unknown Project'}
+      />
+      
+      {/* Task Edit Modal */}
+      <TaskEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setEditingTask(null)
+        }}
+        onSubmit={handleUpdateTask}
+        task={editingTask}
+      />
+      
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => {
+          setIsConfirmModalOpen(false)
+          setTaskToDelete(null)
+        }}
+        onConfirm={confirmDeleteTask}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${taskToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        confirmVariant="danger"
       />
     </>
   )

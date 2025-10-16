@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
-import { X, AlertCircle } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { X, Save, AlertCircle, Edit3 } from 'lucide-react'
 
-const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, onSubmit, columnStatus, projectName }) {
+const TaskEditModal = React.memo(function TaskEditModal({ isOpen, onClose, onSubmit, task }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -9,6 +9,16 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
   })
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (task) {
+      setFormData({
+        title: task.title || '',
+        description: task.description || '',
+        priority: task.priority || 'medium'
+      })
+    }
+  }, [task])
 
   const validateForm = () => {
     const newErrors = {}
@@ -48,25 +58,16 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
     if (!validateForm()) return
     
     setIsSubmitting(true)
-    
     try {
       await onSubmit({
+        ...task,
         title: formData.title.trim(),
         description: formData.description.trim(),
-        priority: formData.priority,
-        status: columnStatus
+        priority: formData.priority
       })
-      
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        priority: 'medium'
-      })
-      setErrors({})
       onClose()
     } catch (error) {
-      console.error('Error creating task:', error)
+      console.error('Error updating task:', error)
     } finally {
       setIsSubmitting(false)
     }
@@ -74,25 +75,15 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
 
   const handleClose = () => {
     setFormData({
-      title: '',
-      description: '',
-      priority: 'medium'
+      title: task?.title || '',
+      description: task?.description || '',
+      priority: task?.priority || 'medium'
     })
     setErrors({})
     onClose()
   }
 
-  if (!isOpen) return null
-
-  const getStatusTitle = (status) => {
-    switch (status) {
-      case 'todo': return 'To Do'
-      case 'in-progress': return 'In Progress'
-      case 'review': return 'Review'
-      case 'done': return 'Done'
-      default: return status
-    }
-  }
+  if (!isOpen || !task) return null
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -108,9 +99,12 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h2 className="modal-title">Create New Task</h2>
+            <h2 className="modal-title">
+              <Edit3 size={20} />
+              Edit Task
+            </h2>
             <p className="modal-subtitle">
-              Adding to <strong>{getStatusTitle(columnStatus)}</strong> in {projectName}
+              Update task details and information
             </p>
           </div>
           <button 
@@ -213,10 +207,10 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
                 {isSubmitting ? (
                   <>
                     <div className="loading"></div>
-                    Creating...
+                    Updating...
                   </>
                 ) : (
-                  'Create Task'
+                  'Update Task'
                 )}
               </button>
               
@@ -236,4 +230,4 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
   )
 })
 
-export default TaskCreateModal
+export default TaskEditModal

@@ -9,6 +9,10 @@ export const fetchProjects = createAsyncThunk(
       return res.data
     } catch (error) {
       const message = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch projects'
+      // If unauthorized, clear the projects
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        return []
+      }
       return rejectWithValue(message)
     }
   }
@@ -72,7 +76,8 @@ const projectsSlice = createSlice({
     items: [], 
     currentProject: null,
     currentBoard: null,
-    status: 'idle', 
+    status: 'idle',
+    boardStatus: 'idle',
     error: null 
   },
   reducers: {
@@ -85,6 +90,19 @@ const projectsSlice = createSlice({
     clearCurrentProject: (state) => {
       state.currentProject = null
       state.currentBoard = null
+    },
+    resetProjectsState: (state) => {
+      state.status = 'idle'
+      state.boardStatus = 'idle'
+      state.error = null
+    },
+    clearAllProjectData: (state) => {
+      state.items = []
+      state.currentProject = null
+      state.currentBoard = null
+      state.status = 'idle'
+      state.boardStatus = 'idle'
+      state.error = null
     }
   },
   extraReducers: (builder) => {
@@ -116,11 +134,11 @@ const projectsSlice = createSlice({
       })
       // Update Project
       .addCase(updateProject.fulfilled, (state, action) => {
-        const index = state.items.findIndex(p => p.id === action.payload.id)
+        const index = state.items.findIndex(p => p._id === action.payload._id)
         if (index !== -1) {
           state.items[index] = action.payload
         }
-        if (state.currentProject?.id === action.payload.id) {
+        if (state.currentProject?._id === action.payload._id) {
           state.currentProject = action.payload
         }
         state.error = null
@@ -130,8 +148,8 @@ const projectsSlice = createSlice({
       })
       // Delete Project
       .addCase(deleteProject.fulfilled, (state, action) => {
-        state.items = state.items.filter(p => p.id !== action.payload)
-        if (state.currentProject?.id === action.payload) {
+        state.items = state.items.filter(p => p._id !== action.payload)
+        if (state.currentProject?._id === action.payload) {
           state.currentProject = null
           state.currentBoard = null
         }
@@ -142,21 +160,21 @@ const projectsSlice = createSlice({
       })
       // Fetch Project Board
       .addCase(fetchProjectBoard.pending, (state) => {
-        state.status = 'loading'
+        state.boardStatus = 'loading'
         state.error = null
       })
       .addCase(fetchProjectBoard.fulfilled, (state, action) => {
-        state.status = 'succeeded'
+        state.boardStatus = 'succeeded'
         state.currentProject = action.payload.project
         state.currentBoard = action.payload
         state.error = null
       })
       .addCase(fetchProjectBoard.rejected, (state, action) => {
-        state.status = 'failed'
+        state.boardStatus = 'failed'
         state.error = action.payload || action.error.message
       })
   }
 })
 
-export const { clearError, setCurrentProject, clearCurrentProject } = projectsSlice.actions
+export const { clearError, setCurrentProject, clearCurrentProject, resetProjectsState, clearAllProjectData } = projectsSlice.actions
 export default projectsSlice.reducer

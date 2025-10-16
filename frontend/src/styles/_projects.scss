@@ -4,6 +4,55 @@
 .project-card {
   position: relative;
   
+  .project-actions-menu {
+    position: absolute;
+    top: v.$spacing-md;
+    right: v.$spacing-md;
+    z-index: 10;
+    
+    .action-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      min-width: 150px;
+      background: v.$surface;
+      border: 1px solid v.$border;
+      border-radius: v.$radius-md;
+      box-shadow: v.$shadow-lg;
+      padding: v.$spacing-xs;
+      z-index: 100;
+      
+      .action-item {
+        display: flex;
+        align-items: center;
+        gap: v.$spacing-sm;
+        padding: v.$spacing-xs v.$spacing-sm;
+        color: v.$text-secondary;
+        text-decoration: none;
+        font-size: v.$font-size-sm;
+        border-radius: v.$radius-sm;
+        transition: all v.$transition-fast;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        
+        &:hover {
+          background: v.$surface-secondary;
+          color: v.$text-primary;
+        }
+        
+        &.danger {
+          &:hover {
+            background: v.$red-100;
+            color: v.$red-600;
+          }
+        }
+      }
+    }
+  }
+}
   .card {
     height: 100%;
     display: flex;
@@ -170,7 +219,7 @@
       white-space: nowrap;
     }
   }
-}
+
 
 // Empty State
 .empty-state {

@@ -167,6 +167,53 @@
         letter-spacing: 0.05em;
       }
     }
+    
+    .task-menu {
+      position: relative;
+      
+      .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        min-width: 140px;
+        background: v.$surface;
+        border: 1px solid v.$border;
+        border-radius: v.$radius-md;
+        box-shadow: v.$shadow-lg;
+        z-index: 1000;
+        padding: v.$spacing-xs;
+        
+        &.active {
+          display: block;
+        }
+        
+        .dropdown-item {
+          display: block;
+          width: 100%;
+          padding: v.$spacing-sm;
+          border: none;
+          background: none;
+          text-align: left;
+          font-size: v.$font-size-sm;
+          color: v.$text-primary;
+          border-radius: v.$radius-sm;
+          cursor: pointer;
+          transition: background-color v.$transition-fast;
+          
+          &:hover {
+            background: v.$surface-secondary;
+          }
+          
+          &.text-red-600 {
+            color: #dc2626;
+            
+            &:hover {
+              background: #fef2f2;
+            }
+          }
+        }
+      }
+    }
   }
 
   .task-content {

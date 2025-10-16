@@ -50,14 +50,22 @@ export default function Sidebar() {
           
           {/* Kanban Board with Project Dropdown */}
           <div className="nav-item-dropdown">
-            <button 
-              className={`nav-item ${isKanbanActive ? 'active' : ''}`}
-              onClick={() => setShowKanbanDropdown(!showKanbanDropdown)}
-            >
-              <LayoutDashboard size={18} />
-              <span>Kanban Board</span>
-              {showKanbanDropdown ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
+            <div className="nav-item-wrapper">
+              <Link 
+                to="/board" 
+                className={`nav-item ${isKanbanActive ? 'active' : ''}`}
+              >
+                <LayoutDashboard size={18} />
+                <span>Kanban Board</span>
+              </Link>
+              <button 
+                className="expand-button"
+                onClick={() => setShowKanbanDropdown(!showKanbanDropdown)}
+                title="Select Project"
+              >
+                {showKanbanDropdown ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+            </div>
             
             {showKanbanDropdown && (
               <div className="dropdown-content">

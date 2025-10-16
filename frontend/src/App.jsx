@@ -1,5 +1,5 @@
-import React from 'react'
-import { Provider } from 'react-redux'
+import React, { useEffect } from 'react'
+import { Provider, useDispatch, useSelector } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import store from './store'
@@ -11,8 +11,18 @@ import ProjectForm from './components/ProjectForm'
 import KanbanBoard from './components/KanbanBoard'
 import AIAssistant from './components/AIAssistant'
 import AuthForm from './components/AuthForm'
+import { checkAuth } from './slices/authSlice'
 
 function AppInner() {
+  const dispatch = useDispatch()
+  const { token, status } = useSelector((state) => state.auth)
+  
+  useEffect(() => {
+    // Check authentication on app startup if we have a token
+    if (token && status === 'idle') {
+      dispatch(checkAuth())
+    }
+  }, [dispatch, token, status])
   return (
     <BrowserRouter>
       <div className="app-root">
@@ -53,6 +63,7 @@ function AppInner() {
                     <Routes>
                       <Route path="/" element={<ProjectsList />} />
                       <Route path="/create" element={<ProjectForm />} />
+                      <Route path="/project/:id/edit" element={<ProjectForm />} />
                       <Route path="/board" element={<KanbanBoard />} />
                       <Route path="/project/:id" element={<KanbanBoard />} />
                     </Routes>

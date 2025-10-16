@@ -29,4 +29,15 @@ const login = async (req, res) => {
   }
 }
 
-module.exports = { register, login }
+const getCurrentUser = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated' })
+    }
+    res.json({ id: req.user._id, email: req.user.email, name: req.user.name })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+module.exports = { register, login, getCurrentUser }

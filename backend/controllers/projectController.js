@@ -14,7 +14,8 @@ const create = async (req, res) => {
 
 const list = async (req, res) => {
   try {
-    const projects = await projectService.getProjects()
+    const userId = req.user?._id
+    const projects = await projectService.getProjects(userId)
     res.json(projects)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -25,6 +26,12 @@ const get = async (req, res) => {
   try {
     const project = await projectService.getProjectById(req.params.id)
     if (!project) return res.status(404).json({ error: 'Project not found' })
+    
+    // Check if user owns the project
+    if (req.user && project.owner && project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' })
+    }
+    
     res.json(project)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -37,6 +44,11 @@ const board = async (req, res) => {
     const project = await projectService.getProjectById(projectId)
     if (!project) return res.status(404).json({ error: 'Project not found' })
     
+    // Check if user owns the project
+    if (req.user && project.owner && project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' })
+    }
+    
     const tasks = await taskService.getTasksByProject(projectId)
     res.json({ project, tasks })
   } catch (err) {
@@ -46,8 +58,15 @@ const board = async (req, res) => {
 
 const update = async (req, res) => {
   try {
+    const existingProject = await projectService.getProjectById(req.params.id)
+    if (!existingProject) return res.status(404).json({ error: 'Project not found' })
+    
+    // Check if user owns the project
+    if (req.user && existingProject.owner && existingProject.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' })
+    }
+    
     const project = await projectService.updateProject(req.params.id, req.body)
-    if (!project) return res.status(404).json({ error: 'Project not found' })
     res.json(project)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -56,8 +75,15 @@ const update = async (req, res) => {
 
 const remove = async (req, res) => {
   try {
+    const existingProject = await projectService.getProjectById(req.params.id)
+    if (!existingProject) return res.status(404).json({ error: 'Project not found' })
+    
+    // Check if user owns the project
+    if (req.user && existingProject.owner && existingProject.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' })
+    }
+    
     const project = await projectService.deleteProject(req.params.id)
-    if (!project) return res.status(404).json({ error: 'Project not found' })
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ error: err.message })
