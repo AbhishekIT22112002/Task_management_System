@@ -1,0 +1,5 @@
+@use './variables' as v;
+
+.breadcrumbs { font-size:0.9rem; color: v.$muted; margin-bottom: 1rem }
+.breadcrumbs a { color: v.$muted; text-decoration:none }
+.breadcrumbs span { margin: 0 6px }

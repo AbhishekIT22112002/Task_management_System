@@ -1,0 +1,240 @@
+@use './variables' as v;
+
+// Project Cards
+.project-card {
+  position: relative;
+  
+  .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: all v.$transition-normal;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: v.$spacing-md;
+    position: relative;
+
+    .title {
+      margin: 0;
+    }
+  }
+
+  .project-title {
+    font-size: v.$font-size-lg;
+    font-weight: v.$font-weight-semibold;
+    color: v.$text-primary;
+    text-decoration: none;
+    margin: 0;
+    line-height: 1.4;
+    
+    &:hover {
+      color: v.$primary;
+    }
+  }
+
+  .project-actions {
+    position: relative;
+    
+    .action-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: v.$surface;
+      border-radius: v.$radius-md;
+      box-shadow: v.$shadow-xl;
+      border: 1px solid v.$border-light;
+      padding: v.$spacing-xs;
+      min-width: 140px;
+      z-index: v.$z-dropdown;
+      
+      .action-item {
+        display: flex;
+        align-items: center;
+        gap: v.$spacing-xs;
+        padding: v.$spacing-xs v.$spacing-sm;
+        border-radius: v.$radius-sm;
+        text-decoration: none;
+        color: v.$text-primary;
+        font-size: v.$font-size-sm;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        transition: all v.$transition-fast;
+        
+        &:hover {
+          background: v.$surface-secondary;
+        }
+        
+        &.danger {
+          color: v.$red-500;
+          
+          &:hover {
+            background: v.$red-100;
+          }
+        }
+      }
+    }
+  }
+
+  .project-content {
+    flex: 1;
+    margin-bottom: v.$spacing-lg;
+
+    .project-description {
+      color: v.$text-secondary;
+      font-size: v.$font-size-sm;
+      line-height: 1.5;
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+
+  .project-footer {
+    border-top: 1px solid v.$border-light;
+    padding-top: v.$spacing-md;
+    margin-bottom: v.$spacing-md;
+
+    .project-meta {
+      display: flex;
+      flex-direction: column;
+      gap: v.$spacing-xs;
+      margin-bottom: v.$spacing-md;
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: v.$spacing-xs;
+        font-size: v.$font-size-xs;
+        color: v.$text-muted;
+      }
+    }
+
+    .project-stats {
+      display: flex;
+      gap: v.$spacing-lg;
+
+      .stat-item {
+        text-align: center;
+
+        .stat-value {
+          display: block;
+          font-size: v.$font-size-lg;
+          font-weight: v.$font-weight-semibold;
+          color: v.$text-primary;
+        }
+
+        .stat-label {
+          font-size: v.$font-size-xs;
+          color: v.$text-muted;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+      }
+    }
+  }
+
+  .project-progress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: v.$spacing-md;
+
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: v.$surface-secondary;
+      border-radius: v.$radius-full;
+      overflow: hidden;
+
+      .progress-fill {
+        height: 100%;
+        background: v.$primary;
+        border-radius: v.$radius-full;
+        transition: width v.$transition-normal;
+      }
+    }
+
+    .progress-text {
+      font-size: v.$font-size-xs;
+      color: v.$text-muted;
+      font-weight: v.$font-weight-medium;
+      white-space: nowrap;
+    }
+  }
+}
+
+// Empty State
+.empty-state {
+  max-width: 400px;
+  margin: 0 auto;
+  
+  .card {
+    text-align: center;
+  }
+  
+  h3 {
+    margin: 0 0 v.$spacing-sm 0;
+    font-size: v.$font-size-xl;
+    font-weight: v.$font-weight-semibold;
+    color: v.$text-primary;
+  }
+  
+  p {
+    margin: 0 0 v.$spacing-xl 0;
+    line-height: 1.6;
+  }
+}
+
+// Legacy support
+.projects-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: v.$spacing-lg;
+}
+
+.project-item {
+  background: v.$surface;
+  border-radius: v.$radius-lg;
+  padding: v.$spacing-lg;
+  box-shadow: v.$shadow-sm;
+  border: 1px solid v.$border-light;
+  display: flex;
+  flex-direction: column;
+  gap: v.$spacing-md;
+  transition: all v.$transition-normal;
+
+  &:hover {
+    box-shadow: v.$shadow-md;
+    transform: translateY(-2px);
+  }
+
+  .meta {
+    color: v.$text-muted;
+    font-size: v.$font-size-sm;
+  }
+}
+
+.project-title {
+  font-weight: v.$font-weight-semibold;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .project-card {
+    .project-footer {
+      .project-stats {
+        justify-content: center;
+        gap: v.$spacing-xl;
+      }
+    }
+  }
+}

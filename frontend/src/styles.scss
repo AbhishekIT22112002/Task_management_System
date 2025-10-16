@@ -1,0 +1,17 @@
+@use './styles/variables' as v;
+@use './styles/layout';
+@use './styles/auth';
+@use './styles/sidebar';
+@use './styles/navbar';
+@use './styles/breadcrumbs';
+@use './styles/projects';
+@use './styles/kanban';
+@use './styles/ai-assistant';
+
+* { box-sizing: border-box }
+
+/* App container */
+.app { max-width: v.$max-width; margin: 2rem auto; padding: 1rem }
+
+/* small utility */
+.muted { color: v.$muted }
