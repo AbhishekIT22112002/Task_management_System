@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
-import { fetchProjects, deleteProject } from '../slices/projectsSlice'
-import { Plus, Calendar, Clock, Users, MoreVertical, Eye, Edit, Trash2 } from 'lucide-react'
+import { fetchProjects, fetchProjectsWithStats, deleteProject } from '../slices/projectsSlice'
+import { Plus, Calendar, Clock, Users, MoreVertical, Eye, Edit, Trash2, RefreshCw } from 'lucide-react'
 import ConfirmModal from './ConfirmModal'
 import toast from 'react-hot-toast'
 
@@ -12,13 +12,17 @@ export default function ProjectsList() {
   const [activeMenu, setActiveMenu] = useState(null)
   const [projectToDelete, setProjectToDelete] = useState(null)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const hasFetched = useRef(false)
 
   useEffect(() => {
-    // Only fetch projects if we don't have any and status is idle
-    if (status === 'idle' && items.length === 0) {
-      dispatch(fetchProjects())
+    // Only fetch once when component first mounts
+    if (!hasFetched.current) {
+      console.log('Fetching projects with stats on mount...')
+      dispatch(fetchProjectsWithStats())
+      hasFetched.current = true
     }
-  }, [dispatch, status, items.length])
+  }, [])
   
   // Close menu when clicking outside
   useEffect(() => {
@@ -68,8 +72,21 @@ export default function ProjectsList() {
       toast.error('Failed to delete project')
     }
   }
+  
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await dispatch(fetchProjectsWithStats())
+      toast.success('Projects refreshed')
+    } catch (error) {
+      console.error('Error refreshing projects:', error)
+      toast.error('Failed to refresh projects')
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
-  if (status === 'loading') {
+  if (status === 'loading' && !isRefreshing) {
     return (
       <div className="container">
         <div className="page-header">
@@ -102,7 +119,7 @@ export default function ProjectsList() {
           <p className="text-muted">Something went wrong while loading your projects.</p>
           <button 
             className="btn btn-primary"
-            onClick={() => dispatch(fetchProjects())}
+            onClick={() => dispatch(fetchProjectsWithStats())}
           >
             Try Again
           </button>
@@ -123,6 +140,14 @@ export default function ProjectsList() {
         </div>
         
         <div className="header-actions">
+          <button 
+            className="btn btn-secondary"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
           <Link to="/create" className="btn btn-primary">
             <Plus size={16} />
             New Project
@@ -197,25 +222,25 @@ export default function ProjectsList() {
                   
                   <div className="project-stats">
                     <div className="stat-item">
-                      <span className="stat-value">0</span>
+                      <span className="stat-value">{project.taskStats?.total || 0}</span>
                       <span className="stat-label">Tasks</span>
                     </div>
                     <div className="stat-item">
-                      <span className="stat-value">0</span>
+                      <span className="stat-value">{project.taskStats?.done || 0}</span>
                       <span className="stat-label">Done</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Progress Bar (placeholder) */}
+                {/* Progress Bar */}
                 <div className="project-progress">
                   <div className="progress-bar">
                     <div 
                       className="progress-fill" 
-                      style={{ width: '0%' }}
+                      style={{ width: `${project.taskStats?.percentage || 0}%` }}
                     ></div>
                   </div>
-                  <span className="progress-text">0% Complete</span>
+                  <span className="progress-text">{project.taskStats?.percentage || 0}% Complete</span>
                 </div>
               </Link>
               

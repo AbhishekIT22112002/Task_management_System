@@ -163,9 +163,13 @@ export default function AuthForm() {
         }))
       }
       
+      // Only show toast after API response is received
       if (result.meta.requestStatus === 'fulfilled') {
+        // Success toast will be shown after API completes successfully
         toast.success(mode === 'login' ? 'Welcome back!' : 'Account created successfully!')
-      } else {
+        
+      } else if (result.meta.requestStatus === 'rejected') {
+        // Error handling for rejected requests
         const errorMsg = result.payload
         if (typeof errorMsg === 'object' && errorMsg.details) {
           // Show detailed validation errors

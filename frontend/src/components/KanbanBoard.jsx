@@ -28,6 +28,7 @@ export default function KanbanBoard() {
   const [taskToDelete, setTaskToDelete] = useState(null)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   
   const dispatch = useDispatch()
   const params = useParams()
@@ -36,7 +37,7 @@ export default function KanbanBoard() {
   const tasks = useSelector((state) => state.tasks.items || [])
   const { status: tasksStatus } = useSelector((state) => state.tasks)
   
-  const loading = boardStatus === 'loading' || tasksStatus === 'loading'
+  const loading = boardStatus === 'loading' || tasksStatus === 'loading' || isRefreshing
   const projectId = params.id
   
   // Use tasks from currentBoard if available, otherwise fall back to tasks slice
@@ -52,9 +53,12 @@ export default function KanbanBoard() {
   // Sync tasks from board data when available (only when board actually changes)
   useEffect(() => {
     if (currentBoard?.tasks && currentBoard.project?._id === projectId) {
-      dispatch(setTasksFromBoard(currentBoard.tasks))
+      // Only sync if we don't have tasks or the project changed
+      if (boardTasks.length === 0 || boardTasks[0]?.project !== projectId) {
+        dispatch(setTasksFromBoard(currentBoard.tasks))
+      }
     }
-  }, [currentBoard?.project?._id, currentBoard?.tasks?.length, dispatch, projectId])
+  }, [currentBoard?.project?._id, dispatch, projectId, currentBoard?.tasks?.length, boardTasks.length])
   
   // Close menu when clicking outside
   useEffect(() => {
@@ -78,7 +82,7 @@ export default function KanbanBoard() {
     }
 
     // Get current board tasks for optimistic update
-    const currentTasks = boardTasks
+    const currentTasks = [...boardTasks] // Create a copy to avoid mutations
     
     // Optimistically update the task status in local state first
     const updatedTasks = currentTasks.map(task => 
@@ -92,21 +96,33 @@ export default function KanbanBoard() {
 
     try {
       // Update task status on server
-      const result = await dispatch(updateTaskStatus({ 
+      const serverResult = await dispatch(updateTaskStatus({ 
         id: draggableId, 
         status: destination.droppableId 
       }))
       
-      // If server update was successful, sync the updated task
-      if (result.meta.requestStatus === 'fulfilled') {
-        const serverUpdatedTask = result.payload
-        const finalTasks = updatedTasks.map(task => 
-          task._id === draggableId ? serverUpdatedTask : task
-        )
-        dispatch(setTasksFromBoard(finalTasks))
+      // If server update was successful, refresh the board data
+      if (serverResult.meta.requestStatus === 'fulfilled') {
+        // Refresh the board data from server to get latest state
+        if (projectId) {
+          const boardResult = await dispatch(fetchProjectBoard(projectId))
+          if (boardResult.meta.requestStatus === 'fulfilled') {
+            // Board data will be synced via useEffect
+            toast.success('Task moved successfully')
+          } else {
+            // Board refresh failed, revert optimistic update
+            dispatch(setTasksFromBoard(currentTasks))
+            toast.error('Failed to refresh board data')
+          }
+        } else {
+          toast.success('Task moved successfully')
+        }
+      } else {
+        // Server update failed, revert
+        dispatch(setTasksFromBoard(currentTasks))
+        toast.error('Failed to move task')
       }
       
-      toast.success('Task moved successfully')
     } catch (error) {
       console.error('Error updating task:', error)
       toast.error('Failed to move task')
@@ -130,21 +146,31 @@ export default function KanbanBoard() {
 
   const handleCreateTask = async (taskData) => {
     try {
+      console.log('Creating task with data:', taskData)
       const result = await dispatch(createTask({
         ...taskData,
         projectId
       }))
       
-      // If task creation was successful, add it to the current board tasks
-      if (result.meta.requestStatus === 'fulfilled') {
-        const newTask = result.payload
-        const updatedTasks = [...tasks, newTask]
-        dispatch(setTasksFromBoard(updatedTasks))
-      }
+      console.log('Create task result:', result)
       
-      toast.success('Task created successfully')
+      // If task creation was successful, refresh board data
+      if (result.meta.requestStatus === 'fulfilled') {
+        setIsRefreshing(true)
+        console.log('Refreshing board after task creation')
+        // Refresh the entire board to get the latest data from server
+        const boardResult = await dispatch(fetchProjectBoard(projectId))
+        console.log('Board refresh result:', boardResult)
+        setIsRefreshing(false)
+        toast.success('Task created successfully')
+      } else {
+        console.error('Task creation failed:', result.payload)
+        toast.error(result.payload || 'Failed to create task')
+        throw new Error('Task creation failed')
+      }
     } catch (error) {
       console.error('Error creating task:', error)
+      setIsRefreshing(false)
       toast.error('Failed to create task')
       throw error // Re-throw to let modal handle it
     }
@@ -191,24 +217,32 @@ export default function KanbanBoard() {
 
   const handleUpdateTask = useCallback(async (taskData) => {
     try {
+      console.log('Updating task with data:', taskData)
       const result = await dispatch(updateTask({ id: editingTask._id, ...taskData }))
       
-      // Update the task in the current board tasks immediately
-      if (result.meta.requestStatus === 'fulfilled') {
-        const updatedTask = result.payload
-        const updatedTasks = tasks.map(task => 
-          task._id === editingTask._id ? updatedTask : task
-        )
-        dispatch(setTasksFromBoard(updatedTasks))
-      }
+      console.log('Update task result:', result)
       
-      toast.success('Task updated successfully')
+      // Update the task and refresh board data
+      if (result.meta.requestStatus === 'fulfilled') {
+        setIsRefreshing(true)
+        console.log('Refreshing board after task update')
+        // Refresh the entire board to get the latest data from server
+        const boardResult = await dispatch(fetchProjectBoard(projectId))
+        console.log('Board refresh result:', boardResult)
+        setIsRefreshing(false)
+        toast.success('Task updated successfully')
+      } else {
+        console.error('Task update failed:', result.payload)
+        toast.error(result.payload || 'Failed to update task')
+        throw new Error('Task update failed')
+      }
     } catch (error) {
       console.error('Error updating task:', error)
+      setIsRefreshing(false)
       toast.error('Failed to update task')
       throw error
     }
-  }, [dispatch, editingTask?._id, tasks])
+  }, [dispatch, editingTask?._id, projectId])
 
   const handleDeleteTask = useCallback((task) => {
     setTaskToDelete(task)
@@ -218,20 +252,30 @@ export default function KanbanBoard() {
 
   const confirmDeleteTask = useCallback(async () => {
     try {
+      console.log('Deleting task with ID:', taskToDelete._id)
       const result = await dispatch(deleteTask(taskToDelete._id))
       
-      // Remove the task from the current board tasks immediately
-      if (result.meta.requestStatus === 'fulfilled') {
-        const updatedTasks = tasks.filter(task => task._id !== taskToDelete._id)
-        dispatch(setTasksFromBoard(updatedTasks))
-      }
+      console.log('Delete task result:', result)
       
-      toast.success('Task deleted successfully')
+      // Delete the task and refresh board data
+      if (result.meta.requestStatus === 'fulfilled') {
+        setIsRefreshing(true)
+        console.log('Refreshing board after task deletion')
+        // Refresh the entire board to get the latest data from server
+        const boardResult = await dispatch(fetchProjectBoard(projectId))
+        console.log('Board refresh result:', boardResult)
+        setIsRefreshing(false)
+        toast.success('Task deleted successfully')
+      } else {
+        console.error('Task deletion failed:', result.payload)
+        toast.error(result.payload || 'Failed to delete task')
+      }
     } catch (error) {
       console.error('Error deleting task:', error)
+      setIsRefreshing(false)
       toast.error('Failed to delete task')
     }
-  }, [dispatch, taskToDelete?._id, tasks])
+  }, [dispatch, taskToDelete?._id, projectId])
 
   // Show project selector if no project ID
   if (!projectId) {

@@ -15,3 +15,45 @@
 
 /* small utility */
 .muted { color: v.$muted }
+
+/* App loading state */
+.app-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+//   background: v.$background;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-container {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  
+  p {
+    color: v.$muted;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.loading-spinner {
+  color: v.$primary;
+  animation: spin 1s linear infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

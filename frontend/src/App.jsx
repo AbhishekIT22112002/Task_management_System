@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { Loader2 } from 'lucide-react'
 import store from './store'
 import { Routes, Route } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
@@ -15,14 +16,27 @@ import { checkAuth } from './slices/authSlice'
 
 function AppInner() {
   const dispatch = useDispatch()
-  const { token, status } = useSelector((state) => state.auth)
-  
+  const { token, status: authStatus } = useSelector((state) => state.auth)
   useEffect(() => {
     // Check authentication on app startup if we have a token
-    if (token && status === 'idle') {
+    if (token && authStatus === 'idle') {
       dispatch(checkAuth())
     }
-  }, [dispatch, token, status])
+  }, [dispatch, token, authStatus])
+  
+  // Show loading spinner while checking auth
+  const isInitialLoading = (token && authStatus === 'loading')
+  
+  if (isInitialLoading) {
+    return (
+      <div className="app-loading">
+        <div className="loading-container">
+          <Loader2 className="loading-spinner" size={48} />
+          <p>Loading your workspace...</p>
+        </div>
+      </div>
+    )
+  }
   return (
     <BrowserRouter>
       <div className="app-root">

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { Plus, Folder, LayoutDashboard, Settings, LogOut, ChevronDown, ChevronRight } from 'lucide-react'
-import { logout } from '../slices/authSlice'
+import { logoutAndClearData } from '../slices/authSlice'
 
 export default function Sidebar() {
   const location = useLocation()
@@ -14,8 +14,15 @@ export default function Sidebar() {
   const isActive = (path) => location.pathname === path
   const isKanbanActive = location.pathname.includes('/project/') || location.pathname === '/board'
 
-  const handleLogout = () => {
-    dispatch(logout())
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutAndClearData())
+      navigate('/auth')
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Even if there's an error, navigate to auth page
+      navigate('/auth')
+    }
   }
 
   const handleProjectSelect = (projectId) => {
@@ -31,7 +38,7 @@ export default function Sidebar() {
           <div className="brand-icon">
             📋
           </div>
-          <span className="brand-text">ProjectFlow AI</span>
+          <span className="brand-text">Task Management System</span>
         </div>
       </div>
 
@@ -111,8 +118,7 @@ export default function Sidebar() {
                   <Folder size={16} />
                   <span className="project-name">{project.name}</span>
                   <div className="project-stats">
-                    {/* This will be populated with real task count */}
-                    <span className="task-count">0</span>
+                    <span className="task-count">{project.taskStats?.total || 0}</span>
                   </div>
                 </Link>
               ))

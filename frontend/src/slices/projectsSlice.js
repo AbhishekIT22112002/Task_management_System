@@ -57,6 +57,55 @@ export const deleteProject = createAsyncThunk(
   }
 )
 
+export const fetchProjectsWithStats = createAsyncThunk(
+  'projects/fetchWithStats',
+  async (_, { rejectWithValue }) => {
+    try {
+      // First fetch all projects
+      const projectsRes = await api.get('/projects')
+      const projects = projectsRes.data
+      
+      // Then fetch task statistics for each project
+      const projectsWithStats = await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const tasksRes = await api.get(`/tasks/project/${project._id}`)
+            const tasks = tasksRes.data || []
+            
+            const totalTasks = tasks.length
+            const doneTasks = tasks.filter(task => task.status === 'done').length
+            const completionPercentage = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0
+            
+            return {
+              ...project,
+              taskStats: {
+                total: totalTasks,
+                done: doneTasks,
+                percentage: completionPercentage
+              }
+            }
+          } catch (error) {
+            console.warn(`Failed to fetch tasks for project ${project._id}:`, error)
+            return {
+              ...project,
+              taskStats: {
+                total: 0,
+                done: 0,
+                percentage: 0
+              }
+            }
+          }
+        })
+      )
+      
+      return projectsWithStats
+    } catch (error) {
+      const message = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch projects with stats'
+      return rejectWithValue(message)
+    }
+  }
+)
+
 export const fetchProjectBoard = createAsyncThunk(
   'projects/fetchBoard',
   async (projectId, { rejectWithValue }) => {
@@ -118,6 +167,20 @@ const projectsSlice = createSlice({
         state.error = null
       })
       .addCase(fetchProjects.rejected, (state, action) => { 
+        state.status = 'failed'
+        state.error = action.payload || action.error.message
+      })
+      // Fetch Projects With Stats
+      .addCase(fetchProjectsWithStats.pending, (state) => { 
+        state.status = 'loading'
+        state.error = null
+      })
+      .addCase(fetchProjectsWithStats.fulfilled, (state, action) => { 
+        state.status = 'succeeded'
+        state.items = action.payload
+        state.error = null
+      })
+      .addCase(fetchProjectsWithStats.rejected, (state, action) => { 
         state.status = 'failed'
         state.error = action.payload || action.error.message
       })
