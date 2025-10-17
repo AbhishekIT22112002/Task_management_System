@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { Plus, MoreVertical, Clock, User, Calendar, MessageSquare, Paperclip, Bot, Sparkles, ArrowLeft } from 'lucide-react'
+import { Plus, MoreVertical, Clock, User, Calendar, MessageSquare, Paperclip, Bot, Sparkles, ArrowLeft, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Link } from 'react-router-dom'
 import { fetchProjects, fetchProjectBoard } from '../slices/projectsSlice'
@@ -32,6 +32,8 @@ export default function KanbanBoard() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showAI, setShowAI] = useState(false)
   const [autoSummarize, setAutoSummarize] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [allowStatusSelect, setAllowStatusSelect] = useState(false)
   
   const dispatch = useDispatch()
   const params = useParams()
@@ -135,7 +137,14 @@ export default function KanbanBoard() {
   }
 
   const getTasksByColumn = (columnId) => {
-    return boardTasks.filter(task => task.status === columnId)
+    const q = searchQuery.trim().toLowerCase()
+    return boardTasks.filter(task => {
+      if (task.status !== columnId) return false
+      if (!q) return true
+      const t = (task.title || '').toLowerCase()
+      const d = (task.description || '').toLowerCase()
+      return t.includes(q) || d.includes(q)
+    })
   }
 
   const handleOpenTaskModal = (columnStatus) => {
@@ -143,6 +152,7 @@ export default function KanbanBoard() {
       toast.error('Please select a project first')
       return
     }
+    setAllowStatusSelect(false)
     setSelectedColumnStatus(columnStatus)
     setIsTaskModalOpen(true)
   }
@@ -352,6 +362,23 @@ export default function KanbanBoard() {
         </div>
         
         <div className="header-actions">
+          <div className="flex items-center gap-2" style={{ minWidth: '280px' }}>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ minWidth: '240px' }}
+            />
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => { setAllowStatusSelect(true); setSelectedColumnStatus(null); setIsTaskModalOpen(true) }}
+            >
+              <Plus size={16} />
+              Add Task
+            </button>
+          </div>
           <button className="btn btn-secondary btn-sm" onClick={() => { setShowAI(true); setAutoSummarize(true) }}>
             <Sparkles size={16} />
             Summarize All
@@ -532,6 +559,7 @@ export default function KanbanBoard() {
         onClose={() => setIsTaskModalOpen(false)}
         onSubmit={handleCreateTask}
         columnStatus={selectedColumnStatus}
+        allowStatusSelect={allowStatusSelect}
         projectName={currentProject?.name || 'Unknown Project'}
       />
       

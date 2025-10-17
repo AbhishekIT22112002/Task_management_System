@@ -280,7 +280,7 @@
 
     textarea {
       flex: 1;
-      padding: v.$spacing-sm v.$spacing-md;
+      padding: v.$spacing-md v.$spacing-lg;
       border: 1px solid v.$border;
       border-radius: v.$radius-lg;
       font-size: v.$font-size-sm;
@@ -363,6 +363,10 @@
 
 @media (max-width: 480px) {
   .ai-header {
+    padding: v.$spacing-sm v.$spacing-md;
+  }
+
+  .ai-input .input-container textarea {
     padding: v.$spacing-sm v.$spacing-md;
   }
 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { X, AlertCircle } from 'lucide-react'
 
-const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, onSubmit, columnStatus, projectName }) {
+const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, onSubmit, columnStatus, projectName, allowStatusSelect = false }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    priority: 'medium'
+    priority: 'medium',
+    status: columnStatus || 'todo'
   })
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -33,6 +34,8 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
       [field]: value
     }))
     
+    if (field === 'status' && !allowStatusSelect) return
+    
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
@@ -54,7 +57,7 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
         title: formData.title.trim(),
         description: formData.description.trim(),
         priority: formData.priority,
-        status: columnStatus
+        status: formData.status
       })
       
       // Reset form
@@ -76,7 +79,8 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
     setFormData({
       title: '',
       description: '',
-      priority: 'medium'
+      priority: 'medium',
+      status: columnStatus || 'todo'
     })
     setErrors({})
     onClose()
@@ -110,7 +114,7 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
           <div>
             <h2 className="modal-title">Create New Task</h2>
             <p className="modal-subtitle">
-              Adding to <strong>{getStatusTitle(columnStatus)}</strong> in {projectName}
+              Adding to <strong>{getStatusTitle(formData.status)}</strong> in {projectName}
             </p>
           </div>
           <button 
@@ -175,6 +179,27 @@ const TaskCreateModal = React.memo(function TaskCreateModal({ isOpen, onClose, o
               {formData.description.length}/500 characters
             </div>
           </div>
+
+          {/* Status (optional) */}
+          {allowStatusSelect && (
+            <div className="form-group">
+              <label className="form-label" htmlFor="taskStatus">
+                Status
+              </label>
+              <select
+                id="taskStatus"
+                className="form-select"
+                value={formData.status}
+                onChange={(e) => handleInputChange('status', e.target.value)}
+                disabled={isSubmitting}
+              >
+                <option value="todo">To Do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          )}
 
           {/* Priority Level */}
           <div className="form-group">
