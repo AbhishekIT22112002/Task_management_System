@@ -77,6 +77,17 @@ app.get('*', (req, res) => {
 connectDB(mongoUri).then(() => {
   app.listen(port, () => {
     logger.info(`Backend listening on port ${port}`)
+
+    // Log Gemini AI configuration status
+    const hasGeminiKey = !!process.env.GEMINI_API_KEY
+    const geminiModel = process.env.GEMINI_MODEL
+    if (!hasGeminiKey) {
+      logger.warn('Gemini not configured: GEMINI_API_KEY missing')
+    } else if (!geminiModel) {
+      logger.warn('Gemini not configured: GEMINI_MODEL missing')
+    } else {
+      logger.info(`Gemini configured with model: ${geminiModel}`)
+    }
   })
 })
 
