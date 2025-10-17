@@ -159,21 +159,17 @@ export default function KanbanBoard() {
 
   const handleCreateTask = async (taskData) => {
     try {
-      console.log('Creating task with data:', taskData)
       const result = await dispatch(createTask({
         ...taskData,
         projectId
       }))
       
-      console.log('Create task result:', result)
       
       // If task creation was successful, refresh board data
       if (result.meta.requestStatus === 'fulfilled') {
         setIsRefreshing(true)
-        console.log('Refreshing board after task creation')
         // Refresh the entire board to get the latest data from server
         const boardResult = await dispatch(fetchProjectBoard(projectId))
-        console.log('Board refresh result:', boardResult)
         setIsRefreshing(false)
         toast.success('Task created successfully')
       } else {
@@ -230,18 +226,14 @@ export default function KanbanBoard() {
 
   const handleUpdateTask = useCallback(async (taskData) => {
     try {
-      console.log('Updating task with data:', taskData)
       const result = await dispatch(updateTask({ id: editingTask._id, ...taskData }))
       
-      console.log('Update task result:', result)
       
       // Update the task and refresh board data
       if (result.meta.requestStatus === 'fulfilled') {
         setIsRefreshing(true)
-        console.log('Refreshing board after task update')
         // Refresh the entire board to get the latest data from server
         const boardResult = await dispatch(fetchProjectBoard(projectId))
-        console.log('Board refresh result:', boardResult)
         setIsRefreshing(false)
         toast.success('Task updated successfully')
       } else {
@@ -265,18 +257,14 @@ export default function KanbanBoard() {
 
   const confirmDeleteTask = useCallback(async () => {
     try {
-      console.log('Deleting task with ID:', taskToDelete._id)
       const result = await dispatch(deleteTask(taskToDelete._id))
       
-      console.log('Delete task result:', result)
       
       // Delete the task and refresh board data
       if (result.meta.requestStatus === 'fulfilled') {
         setIsRefreshing(true)
-        console.log('Refreshing board after task deletion')
         // Refresh the entire board to get the latest data from server
         const boardResult = await dispatch(fetchProjectBoard(projectId))
-        console.log('Board refresh result:', boardResult)
         setIsRefreshing(false)
         toast.success('Task deleted successfully')
       } else {

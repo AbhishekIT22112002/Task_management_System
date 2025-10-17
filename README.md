@@ -125,6 +125,8 @@ npm run build
 
 This will create a `dist` folder inside the `frontend` directory with the production-ready build.
 
+**⚠️ IMPORTANT:** Do NOT start the frontend development server (`npm run dev`). We only need to build the frontend. The backend server will serve the frontend build automatically on backend url.
+
 ---
 
 ### Step 4: Start the Backend Server
@@ -141,7 +143,7 @@ npm run dev
 
 The backend server will:
 - Start on `http://localhost:4000`
-- Serve the frontend build from the `frontend/dist` folder
+- **Automatically serve the frontend build** from the `frontend/dist` folder
 - Connect to MongoDB
 - Log all API requests
 
@@ -151,7 +153,10 @@ Open your browser and navigate to:
 http://localhost:4000
 ```
 
-The backend serves both the API and the frontend static files.
+**🎯 Important Notes:**
+- ✅ **Only the backend server runs** - no need to start a separate frontend server
+- ✅ The backend serves both the API (at `/api/*`) and the frontend static files
+- ✅ All requests go to `http://localhost:4000` - frontend and backend on the same URL
 
 ---
 

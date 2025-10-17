@@ -7,6 +7,9 @@ const path = require('path');
 
 const app = express()
 
+// Initialize model associations and virtuals
+require('./models/associations').init()
+
 // Require environment variables (no hardcoded fallbacks)
 const port = process.env.PORT
 if (!port) {

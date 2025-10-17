@@ -18,7 +18,6 @@ export default function ProjectsList() {
   useEffect(() => {
     // Only fetch once when component first mounts
     if (!hasFetched.current) {
-      console.log('Fetching projects with stats on mount...')
       dispatch(fetchProjectsWithStats())
       hasFetched.current = true
     }
