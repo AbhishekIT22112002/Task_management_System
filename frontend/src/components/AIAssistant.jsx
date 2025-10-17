@@ -55,6 +55,7 @@ export default function AIAssistant({ projectId, isOpen, onClose, autoSummarize 
         { id: Date.now() + 1, type: 'ai', content: summary, timestamp: new Date() }
       ])
     } catch (e) {
+      console.error('AI summarize failed:', e)
       setMessages(prev => [
         ...prev,
         { id: Date.now(), type: 'ai', content: 'Failed to summarize tasks. Please try again.', timestamp: new Date() }
@@ -122,6 +123,7 @@ export default function AIAssistant({ projectId, isOpen, onClose, autoSummarize 
       }
       setMessages(prev => [...prev, aiResponse])
     } catch (e) {
+      console.error('AI ask failed:', e)
       setMessages(prev => [...prev, { id: Date.now() + 2, type: 'ai', content: 'Failed to get AI response. Please try again.', timestamp: new Date() }])
     } finally {
       setIsLoading(false)

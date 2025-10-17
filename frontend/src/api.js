@@ -76,12 +76,12 @@ api.interceptors.response.use(
 )
 
 export const aiSummarize = async (projectId) => {
-  const { data } = await api.post('/ai/summarize', { projectId })
+  const { data } = await api.post('/ai/summarize', { projectId }, { timeout: 60000 })
   return data
 }
 
 export const aiAsk = async (projectId, question) => {
-  const { data } = await api.post('/ai/ask', { projectId, question })
+  const { data } = await api.post('/ai/ask', { projectId, question }, { timeout: 60000 })
   return data
 }
 
