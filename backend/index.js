@@ -27,22 +27,24 @@ app.use(express.static(path.join(__dirname, '../frontend/dist')));
 // and allow non-browser / server-to-server requests which don't send an Origin header.
 // For any other origin, the Access-Control-Allow-* headers will not be set and the
 // browser will block the request.
-app.use(cors({
-  origin: function (origin, callback) {
-    // No origin (curl, server-to-server) -> allow
-    if (!origin) return callback(null, true)
-    // Allow any origin that includes :3000 (e.g. http://localhost:3000)
-    try {
-      if (origin.includes(':3000')) return callback(null, true)
-    } catch (e) {
-      // ignore
-    }
-    // Otherwise disallow by not setting CORS headers
-    return callback(null, false)
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
-}))
+// Optional CORS with env-configured allowed origins
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean)
+
+if (allowedOrigins.length > 0) {
+  app.use(cors({
+    origin: function (origin, callback) {
+      // No origin (curl, server-to-server) -> allow
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.includes(origin)) return callback(null, true)
+      return callback(null, false)
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+  }))
+}
 app.use(express.json())
 
 // Request logging

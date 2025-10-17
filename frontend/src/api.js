@@ -1,7 +1,8 @@
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-const API_BASE = import.meta.env.VITE_API_BASE || import.meta.env.REACT_APP_API_BASE || 'http://localhost:4000/api'
+// Prefer relative paths by default; allow override via env only
+const API_BASE = import.meta.env.VITE_API_BASE || import.meta.env.REACT_APP_API_BASE || '/api'
 
 const api = axios.create({
   baseURL: API_BASE,
