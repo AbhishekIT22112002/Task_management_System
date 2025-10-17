@@ -26,8 +26,11 @@ export default function ProjectsList() {
   
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => {
-      if (activeMenu) {
+    const handleClickOutside = (e) => {
+      if (!activeMenu) return
+      // Keep menu open when clicking inside the actions menu
+      const isInsideMenu = e.target.closest?.('.project-actions-menu')
+      if (!isInsideMenu) {
         setActiveMenu(null)
       }
     }
@@ -234,13 +237,21 @@ export default function ProjectsList() {
 
                 {/* Progress Bar */}
                 <div className="project-progress">
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill" 
-                      style={{ width: `${project.taskStats?.percentage || 0}%` }}
-                    ></div>
-                  </div>
-                  <span className="progress-text">{project.taskStats?.percentage || 0}% Complete</span>
+                  {(() => {
+                    const pct = project.taskStats?.percentage || 0
+                    const tier = pct === 100 ? 'complete' : pct < 30 ? 'low' : pct < 70 ? 'medium' : 'high'
+                    return (
+                      <>
+                        <div className="progress-bar" data-progress={tier}>
+                          <div 
+                            className="progress-fill" 
+                            style={{ width: `${pct}%` }}
+                          ></div>
+                        </div>
+                        <span className="progress-text" data-progress={tier}>{pct}% Complete</span>
+                      </>
+                    )
+                  })()}
                 </div>
               </Link>
               
@@ -257,7 +268,7 @@ export default function ProjectsList() {
                   <MoreVertical size={16} />
                 </button>
                 {activeMenu === project._id && (
-                  <div className="action-menu">
+                  <div className="action-menu active">
                     <Link to={`/project/${project._id}`} className="action-item">
                       <Eye size={14} />
                       View Board

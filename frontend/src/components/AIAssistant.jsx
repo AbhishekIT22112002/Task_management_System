@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { Bot, Send, Sparkles, MessageCircle, X, Maximize2, Minimize2, Loader2 } from 'lucide-react'
-
-// Mock AI responses for now - will be replaced with actual Gemini AI integration
+import { aiSummarize, aiAsk } from '../api'
 const mockResponses = {
   summarize: "Based on your current tasks, here's a summary:\n\n• **High Priority**: 2 tasks related to authentication need immediate attention\n• **In Progress**: 2 tasks are currently being worked on\n• **Completed**: 1 documentation task was finished recently\n• **Overdue**: No tasks are currently overdue\n\nRecommendation: Focus on completing the authentication API implementation first, as it's blocking other tasks.",
   
@@ -14,15 +13,14 @@ const mockResponses = {
   ]
 }
 
-export default function AIAssistant() {
-  const [isOpen, setIsOpen] = useState(false)
+export default function AIAssistant({ projectId, isOpen, onClose, autoSummarize = false }) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [messages, setMessages] = useState([
     {
       id: 1,
       type: 'ai',
-      content: "👋 Hi! I'm your AI assistant. I can help you summarize tasks, answer questions about your projects, and provide productivity insights. What would you like to know?",
+      content: "👋 Hi! I'm your AI assistant. I can summarize tasks and answer questions about this project.",
       timestamp: new Date()
     }
   ])
@@ -45,6 +43,34 @@ export default function AIAssistant() {
       inputRef.current.focus()
     }
   }, [isOpen])
+
+  const runSummarize = async () => {
+    if (!projectId) return
+    setIsLoading(true)
+    try {
+      const { summary } = await aiSummarize(projectId)
+      setMessages(prev => [
+        ...prev,
+        { id: Date.now(), type: 'user', content: 'Summarize all tasks', timestamp: new Date() },
+        { id: Date.now() + 1, type: 'ai', content: summary, timestamp: new Date() }
+      ])
+    } catch (e) {
+      setMessages(prev => [
+        ...prev,
+        { id: Date.now(), type: 'ai', content: 'Failed to summarize tasks. Please try again.', timestamp: new Date() }
+      ])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isOpen && autoSummarize) {
+      // Trigger once on open when requested
+      runSummarize()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, autoSummarize])
 
   const generateAIResponse = (userMessage) => {
     const message = userMessage.toLowerCase()
@@ -73,10 +99,12 @@ export default function AIAssistant() {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return
 
+    const question = inputValue.trim()
+
     const userMessage = {
       id: Date.now(),
       type: 'user',
-      content: inputValue.trim(),
+      content: question,
       timestamp: new Date()
     }
 
@@ -84,18 +112,20 @@ export default function AIAssistant() {
     setInputValue('')
     setIsLoading(true)
 
-    // Simulate AI processing delay
-    setTimeout(() => {
+    try {
+      const { answer } = await aiAsk(projectId, question)
       const aiResponse = {
         id: Date.now() + 1,
         type: 'ai',
-        content: generateAIResponse(inputValue),
+        content: answer,
         timestamp: new Date()
       }
-
       setMessages(prev => [...prev, aiResponse])
+    } catch (e) {
+      setMessages(prev => [...prev, { id: Date.now() + 2, type: 'ai', content: 'Failed to get AI response. Please try again.', timestamp: new Date() }])
+    } finally {
       setIsLoading(false)
-    }, 1000 + Math.random() * 2000)
+    }
   }
 
   const handleKeyPress = (e) => {
@@ -140,21 +170,11 @@ export default function AIAssistant() {
     { label: "Show project status", action: () => setInputValue("Show me my project status") },
   ]
 
-  if (!isOpen) {
-    return (
-      <button
-        className="ai-assistant-trigger"
-        onClick={() => setIsOpen(true)}
-        title="Open AI Assistant"
-      >
-        <Bot size={24} />
-        <span className="pulse-dot"></span>
-      </button>
-    )
-  }
+  if (!isOpen) return null
 
   return (
-    <div className={`ai-assistant ${isMaximized ? 'maximized' : ''}`}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className={`ai-assistant ${isMaximized ? 'maximized' : ''}`} onClick={(e) => e.stopPropagation()}>
       {/* Header */}
       <div className="ai-header">
         <div className="ai-title">
@@ -174,7 +194,7 @@ export default function AIAssistant() {
           
           <button
             className="btn btn-ghost btn-sm btn-icon"
-            onClick={() => setIsOpen(false)}
+            onClick={onClose}
             title="Close"
           >
             <X size={16} />
@@ -222,23 +242,24 @@ export default function AIAssistant() {
       </div>
 
       {/* Quick Actions */}
-      {messages.length <= 2 && (
-        <div className="quick-actions">
-          <div className="quick-actions-title">Quick actions:</div>
-          <div className="quick-actions-buttons">
-            {quickActions.map((action, index) => (
-              <button
-                key={index}
-                className="btn btn-ghost btn-sm"
-                onClick={action.action}
-              >
-                <Sparkles size={14} />
-                {action.label}
-              </button>
-            ))}
-          </div>
+      <div className="quick-actions">
+        <div className="quick-actions-title">Quick actions:</div>
+        <div className="quick-actions-buttons">
+          <button className="btn btn-ghost btn-sm" onClick={runSummarize} disabled={isLoading}>
+            <Sparkles size={14} /> Summarize All Tasks
+          </button>
+          {quickActions.map((action, index) => (
+            <button
+              key={index}
+              className="btn btn-ghost btn-sm"
+              onClick={action.action}
+            >
+              <Sparkles size={14} />
+              {action.label}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Input */}
       <div className="ai-input">
@@ -272,6 +293,7 @@ export default function AIAssistant() {
             <Send size={16} />
           </button>
         </div>
+      </div>
       </div>
     </div>
   )

@@ -11,6 +11,7 @@ import { setTasksFromBoard, updateTask, deleteTask } from '../slices/tasksSlice'
 import TaskCreateModal from './TaskCreateModal'
 import TaskEditModal from './TaskEditModal'
 import ConfirmModal from './ConfirmModal'
+import AIAssistant from './AIAssistant'
 import api from '../api'
 
 const columns = [
@@ -29,6 +30,8 @@ export default function KanbanBoard() {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [openMenuId, setOpenMenuId] = useState(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showAI, setShowAI] = useState(false)
+  const [autoSummarize, setAutoSummarize] = useState(false)
   
   const dispatch = useDispatch()
   const params = useParams()
@@ -349,11 +352,11 @@ export default function KanbanBoard() {
         </div>
         
         <div className="header-actions">
-          <button className="btn btn-secondary btn-sm">
+          <button className="btn btn-secondary btn-sm" onClick={() => { setShowAI(true); setAutoSummarize(true) }}>
             <Sparkles size={16} />
             Summarize All
           </button>
-          <button className="btn btn-primary btn-sm">
+          <button className="btn btn-primary btn-sm" onClick={() => { setShowAI(true); setAutoSummarize(false) }}>
             <Bot size={16} />
             Ask AI
           </button>
@@ -515,6 +518,14 @@ export default function KanbanBoard() {
         </div>
       </div>
       
+      {/* AI Assistant Modal */}
+      <AIAssistant
+        projectId={projectId}
+        isOpen={showAI}
+        onClose={() => setShowAI(false)}
+        autoSummarize={autoSummarize}
+      />
+
       {/* Task Creation Modal */}
       <TaskCreateModal
         isOpen={isTaskModalOpen}

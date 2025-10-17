@@ -41,11 +41,13 @@ app.get('/health', (req, res) => {
 const authRoutes = require('./routes/auth')
 const projectRoutes = require('./routes/projects')
 const tasksRoutes = require('./routes/tasks')
+const aiRoutes = require('./routes/ai')
 const authMiddleware = require('./middleware/authMiddleware')
 
 app.use('/api/auth', authRoutes)
 app.use('/api/projects', authMiddleware, projectRoutes)
 app.use('/api/tasks', authMiddleware, tasksRoutes)
+app.use('/api/ai', authMiddleware, aiRoutes)
 
 // Connect to MongoDB then start server
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/task_management_db'

@@ -74,4 +74,14 @@ api.interceptors.response.use(
   }
 )
 
+export const aiSummarize = async (projectId) => {
+  const { data } = await api.post('/ai/summarize', { projectId })
+  return data
+}
+
+export const aiAsk = async (projectId, question) => {
+  const { data } = await api.post('/ai/ask', { projectId, question })
+  return data
+}
+
 export default api
