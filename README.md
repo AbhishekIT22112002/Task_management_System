@@ -1,6 +1,6 @@
 # TaskFlow AI - Project & Task Management System
 
-⚠️ **Note**: Using the hosted server will use my Gemini AI key, so you can try only 3–4 prompts.
+⚠️ **Note**: The hosted server uses my Gemini AI key on the **free tier**, so you can try only **3–4 prompts**.
 
 🚀 **Live Demo**: [https://taskflowai.abhidev.xyz/](https://taskflowai.abhidev.xyz/)  
 📦 **Hosted on**: AWS Lightsail
