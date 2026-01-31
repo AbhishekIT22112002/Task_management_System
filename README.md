@@ -1,9 +1,5 @@
 # TaskFlow AI - Project & Task Management System
 
-**⚠️ Note: Since the hosted server runs on my Gemini AI key (free tier), usage is limited to 3–4 prompts.**
-
-🚀 **Live Demo**: [https://taskflowai.abhidev.xyz/](https://taskflowai.abhidev.xyz/)  
-📦 **Hosted on**: AWS Lightsail
 
 A full-stack MERN (MongoDB, Express.js, React, Node.js) project and task management system with AI-powered assistance using Google's Gemini AI. Features include JWT authentication, drag-and-drop Kanban boards, and intelligent task summarization.
 
@@ -345,7 +341,6 @@ This project is licensed under the MIT License.
 
 **Abhishek**
 - GitHub: [@AbhishekIT22112002](https://github.com/AbhishekIT22112002)
-- Live Demo: [https://taskflowai.abhidev.xyz/](https://taskflowai.abhidev.xyz/)
 
 ---
 
